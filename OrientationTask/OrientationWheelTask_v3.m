@@ -815,7 +815,7 @@ prefs.lags_per_block = 105; %this is from when entrainers were used (not so impo
 % ---------------
 prefs.SOA = 6; %refresh target onset to mask onset (50 ms optimal/8.3333 msec = 6 cycles)
 prefs.maskISI = prefs.SOA - 1; %target OFFSET to mask onset
-prefs.maskwidth = 20;
+prefs.maskwidth = 20; %used as a place holder in this experiment
 prefs.mask_thresh = 50; %points darker than background
 prefs.mask_length = 1; %refresh cycles of mask
 
