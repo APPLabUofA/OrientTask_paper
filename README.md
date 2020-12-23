@@ -1,6 +1,8 @@
 # OrientTask_paper
 Code to run task and analyze data describe in manuscript.
-Paper is being prepared for submission.
+
+Link to manuscript: https://www.biorxiv.org/content/10.1101/2020.12.21.423809v1
+
 
 Data files are located here: https://osf.io/cw7ux/files/
 
