@@ -30,74 +30,50 @@ load([exp.dataLocation '\ProcessData\ALLEEG_' exp.settings '.mat'])
 %initialize EEGLAB
 [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
 
+
+%% Load raw power data
+% Data name is for dataset provided. This name will be different if data is 
+% processed again
+load([pwd 'all_ersp_v4.mat'])
+
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 
 
 % #########################################################################
 % /////////////////////////////////////////////////////////////////////////
-%%                     Baseline Correction
+%%                     Raw ERS Values (log scaled)
 % /////////////////////////////////////////////////////////////////////////
 % #########################################################################
-% Right now it is set-up to subtract mean power across the epoch at each
-% frequency from each time point at that same frequency
-% note: does not include the catch trial data
-tic %see how long this takes
-all_erspN = cell(length(exp.participants),length(exp.singletrialselecs)); %pre-allocate
+% --For data with targets--
+all_erspR = cell(length(exp.participants),length(exp.singletrialselecs)); %pre-allocate
 for i_part = 1:length(exp.participants) % --
     for ii = 1:length(exp.singletrialselecs)
         i_elect = exp.singletrialselecs(ii); %for doing only a selection of electrodes
         % all_ersp is (participant x electrode).trials(freq x time x trial)
-        tmp_ersp = abs(all_ersp{i_part,i_elect});
+        tmp_ersp = abs(all_ersp{i_part,i_elect}).^2;
         for i_trial = 1:size(tmp_ersp,3)
-            for fq = 1:length(freqs)
-                bl_freq = mean(tmp_ersp(fq,:,i_trial),2); %average each trial
-%                 bl_freq = mean(mean(tmp_ersp(fq,:,:),2),3); %average all trials
-                all_erspN{i_part,i_elect}.trials(fq,:,i_trial) = tmp_ersp(fq,:,i_trial)-bl_freq;
-            end
-        clear fq bl_freq
+            all_erspR{i_part,i_elect}.trials(:,:,i_trial) = log10(tmp_ersp(:,:,i_trial)); %dB converted
         end
+        clear i_trial
     end
     clear ii i_elect tmp_ersp
 end
 clear i_part
-toc %see how long this takes
 
-
-% #########################################################################
-% /////////////////////////////////////////////////////////////////////////
-%%                      Standardize Power
-% /////////////////////////////////////////////////////////////////////////
-% #########################################################################
-
-all_ersp_Z = cell(length(exp.participants),length(exp.singletrialselecs)); %pre-allocate
-% Change power to z-score values per person
-for i_part = 1:length(exp.participants)
-    % Get power across trials
-    for ii = 1:length(exp.singletrialselecs)
-        i_elect = exp.singletrialselecs(ii); %for doing only a selection of electrodes
-        % all_ersp is (participant x electrode).trials(freq x time x trial)
-        part_ersp = all_erspN{i_part,i_elect}.trials; %get single subject's baseline corrected power
-%         all_ersp_Z{i_part,i_elect}.trials = normalize(part_ersp,3,'zscore','robust');
-        all_ersp_Z{i_part,i_elect}.trials = (part_ersp - mean(part_ersp(:))) / std(part_ersp(:));
-        clear part_ersp i_elect
-    end
-    clear ii
-end
-clear i_part
 
 
 % /////////////////////////////////////////////////////////////////////////
-%% Save Standardized Data
+%% Save Data
 chanlocs = EEG.chanlocs; %going to want to save electrode locations
 % this is large file so it will take some time to save
-save([saveLocation 'all_ersp_Z_v4.mat'],'all_ersp_z','chanlocs')
+save([saveLocation 'all_ersp_R_v4.mat'],'all_erspR','chanlocs','-v7.3')
 
 % /////////////////////////////////////////////////////////////////////////
-%% OR Load Standardized Data If Exists
-all_ersp_Z = struct2cell(load([saveLocation 'all_ersp_Z_v4.mat'],'all_ersp_z'));  %gets loaded as a struct
-all_ersp_Z = all_ersp_Z{1};
-chanlocs = struct2cell(load([saveLocation 'all_ersp_Z_v4.mat'],'chanlocs')); 
+%% OR Load Processed Data If Exists
+all_erspR = struct2cell(load([saveLocation 'all_ersp_R_v4.mat'],'all_erspR'));  %gets loaded as a struct
+all_erspR = all_erspR{1};
+chanlocs = struct2cell(load([saveLocation 'all_ersp_R_v4.mat'],'chanlocs')); 
 chanlocs = chanlocs{1};
 
 % /////////////////////////////////////////////////////////////////////////
@@ -107,7 +83,7 @@ chanlocs = chanlocs{1};
 
 % #########################################################################
 % /////////////////////////////////////////////////////////////////////////
-%% Useful Plots But Not Included In Paper
+%% Useful Plots
 % /////////////////////////////////////////////////////////////////////////
 % #########################################################################
 
@@ -119,7 +95,7 @@ chanlocs = chanlocs{1};
 
 % ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 % Load previously created data (if it has been created)
-load([saveLocation 'pwr_AvG_v4.mat']);
+load([saveLocation 'pwrR_AvG_v4.mat']);
 % ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
@@ -144,7 +120,7 @@ for i_part = 1:length(exp.participants)
         i_elect = exp.singletrialselecs(ii); %for doing only a selection of electrodes
         
         % all_ersp is (participant x electrode).trials(freq x time x trial)
-        part_ersp = all_ersp_Z{i_part,i_elect}.trials; %get single subject's baseline corrected power
+        part_ersp = all_erspR{i_part,i_elect}.trials; %get single subject's baseline corrected power
         
         % Get trials with small errors
         x_pwr{1,i_elect}(i_part,:,:) = squeeze(mean(part_ersp(:,:,[...
@@ -160,22 +136,17 @@ end
 clear ii i_part
 
 % /////////////////////////////////////////////////////////////////////////
-% Save data if not saved yet
-save([saveLocation 'pwr_AvG_v4.mat'],'errlims','n_errdeg_m','n_pwr','x_errdeg_m','x_pwr');
-
-% /////////////////////////////////////////////////////////////////////////
-
-
-
-% /////////////////////////////////////////////////////////////////////////
 % #########################################################################
 %% Gets a count of trials
 err_trl_count(:,1) = cellfun(@numel,x_errdeg_m); %small errors
 err_trl_count(:,2) = cellfun(@numel,n_errdeg_m); %large errors
 % err_trl_count(:,3) = cell2mat({ALLEEG(1:end).trials}); %total trial count
-% #########################################################################
+% ########################################################################
 % /////////////////////////////////////////////////////////////////////////
-% #########################################################################
+%% Save data if not saved yet
+save([saveLocation 'pwrR_AvG_v4.mat'],'errlims','n_errdeg_m','n_pwr','x_errdeg_m','x_pwr');
+% /////////////////////////////////////////////////////////////////////////
+
 
 
 % &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -184,7 +155,7 @@ err_trl_count(:,2) = cellfun(@numel,n_errdeg_m); %large errors
 
 % Raw ERS plots
 cmap = redblue(256); %create colormap colors
-savename = 'SpecPlotZ_';
+savename = 'SpecPlotR_';
 for ii = 1:length(exp.singletrialselecs)
 % for ii = 1:5 %central electrodes only
     
@@ -202,13 +173,12 @@ for ii = 1:length(exp.singletrialselecs)
     title(['Accurate: ' exp.singtrlelec_name{ii}]); set(gca,'Ydir','Normal')
     line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
     line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
-%     ylim([3 35]); yticks(5:5:35)
-%     xlim([-700 800]); xticks(-600:200:800)
+    xlim([-700 800]); xticks(-600:200:800)
     ylim([2 40]); yticks(5:5:40)
-    xlim([-200 800]); xticks(-200:100:800) %match ERPs
+%     xlim([-200 800]); xticks(-200:100:800) %match ERPs
     ylabel('Freqency (Hz)'); xlabel('Time (ms)');
     t = colorbar('peer',gca);
-    set(get(t,'ylabel'),'String', 'Standardized Power');
+    set(get(t,'ylabel'),'String', 'Log Power');
     
     % Plot Large Errors
     subplot(1,2,2)
@@ -216,13 +186,12 @@ for ii = 1:length(exp.singletrialselecs)
     title(['Guesses: ' exp.singtrlelec_name{ii}]); set(gca,'Ydir','Normal')
     line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
     line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
-%     ylim([3 35]); yticks(5:5:35)
-%     xlim([-700 800]); xticks(-600:200:800)
+    xlim([-700 800]); xticks(-600:200:800)
     ylim([2 40]); yticks(5:5:40)
-    xlim([-200 800]); xticks(-200:100:800) %match ERPs
+%     xlim([-200 800]); xticks(-200:100:800) %match ERPs
     ylabel('Freqency (Hz)'); xlabel('Time (ms)');
     t = colorbar('peer',gca);
-    set(get(t,'ylabel'),'String', 'Standardized Power (z)');
+    set(get(t,'ylabel'),'String', 'Log Power');
     
     savefig([saveFig savename exp.singtrlelec_name{ii}])
    
@@ -251,14 +220,13 @@ for ii = 1:length(exp.singletrialselecs)
     title(['Accurate-Guesses: ' exp.singtrlelec_name{ii}]); set(gca,'Ydir','Normal')
     line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
     line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
-%     ylim([3 40]); yticks(5:5:40)
-%     xlim([-700 800]); xticks(-600:200:800)
+    xlim([-700 800]); xticks(-600:200:800)
     ylim([2 40]); yticks(5:5:40)
-    xlim([-200 800]); xticks(-200:100:800) %match ERPs
+%     xlim([-200 800]); xticks(-200:100:800) %match ERPs
     ylabel('Freqency (Hz)'); xlabel('Time (ms)');
     t = colorbar('peer',gca); 
     t.Ticks = [-0.3:0.1:0.3]; %make sure colorbar contains ticks
-    set(get(t,'ylabel'),'String', 'Standardized Power (z)');
+    set(get(t,'ylabel'),'String', 'Log Power');
     
     savefig([saveFig savename exp.singtrlelec_name{ii}])
     
@@ -295,14 +263,13 @@ imagesc(times,freqs,plot_x_avg-plot_n_avg,CLim);
 title('Accurate-Guesses: Grand Avg'); set(gca,'Ydir','Normal')
 line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
 line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
-% ylim([3 40]); yticks(5:5:40)
-% xlim([-700 800]); xticks(-600:200:800)
+xlim([-700 800]); xticks(-600:200:800)
 ylim([2 40]); yticks(5:5:40)
-xlim([-200 800]); xticks(-200:100:800) %match ERPs
+% xlim([-200 800]); xticks(-200:100:800) %match ERPs
 ylabel('Freqency (Hz)'); xlabel('Time (ms)');
 t = colorbar('peer',gca); 
 t.Ticks = [-0.3:0.1:0.3]; %make sure colorbar contains ticks
-set(get(t,'ylabel'),'String', 'Standardized Power (z)');
+set(get(t,'ylabel'),'String', 'Log Power');
 
 savefig([saveFig 'SpecPlot_DifZ_GrandAvg'])
 
@@ -375,7 +342,7 @@ for tw_i = 1:length(tWin) %loop through several time windows
         'plotchans',elect_erp,'emarker',{'.','k',11,1})
     title('Accurate');
     t = colorbar('peer',gca);
-    set(get(t,'ylabel'),'String', 'Standardized Power (dB)');
+    set(get(t,'ylabel'),'String', 'Log Power');
     clear temp
     hold on
     
@@ -406,7 +373,7 @@ for tw_i = 1:length(tWin) %loop through several time windows
         'plotchans',elect_erp,'emarker',{'.','k',11,1})
     title(['Accurate-Guesses: ' num2str(freqband(1)) '-' num2str(freqband(2)) ' Hz: ' num2str(itWin(1)) ' to ' num2str(itWin(2)) ' ms']);
     t = colorbar('peer',gca);
-    set(get(t,'ylabel'),'String', 'Standardized Power');
+    set(get(t,'ylabel'),'String', 'Log Power');
     clear temp
     
     savefig([saveFig 'TopoDiff_' num2str(freqband(1)) '-' num2str(freqband(2)) '_' num2str(itWin(1)) 'to' num2str(itWin(2))])

@@ -153,9 +153,9 @@ title('Thresholded Z map: Grand Average','FontSize',14);
 set(gca,'Ydir','Normal')
 line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
 line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5) %vertical line for response screen onset
-ylim([2 40]); yticks(5:5:40)
-% xlim([-200 800]); xticks(-200:100:800) %axis limit to match ERPs
-xlim([-700 800]); xticks(-600:200:800)
+ylim([3 40]); yticks(5:5:40)
+xlim([-200 800]); xticks(-200:100:800) %axis limit to match ERPs
+% xlim([-700 800]); xticks(-600:200:800)
 ylabel('Frequency (Hz)');
 xlabel('Time (ms)');
 t = colorbar('peer',gca);
@@ -206,7 +206,9 @@ tWin{6} = [360 500]; %P3
 freqband = [30 40]; %gamma
 % freqband = [23 29]; %beta2
 % freqband = [15 22]; %beta1
+% freqband = [10 14]; %high alpha
 % freqband = [8 14]; %alpha
+% freqband = [8 11]; %low alpha
 % freqband = [4 7]; %theta
 % freqband = [2 3]; %delta
 freqlim = find(freqs>=(freqband(1)-0.5) & freqs<=(freqband(2)+0.5));

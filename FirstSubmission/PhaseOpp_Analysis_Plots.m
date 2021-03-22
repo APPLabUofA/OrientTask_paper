@@ -197,9 +197,10 @@ for ii = 1:length(exp2.singletrialselecs)
     set(gca,'Ydir','Normal')
     line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
     line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
-    xlim([-700 800]); xticks(-600:200:800)
+%     ylim([3 40]); yticks(5:5:40)
+%     xlim([-700 800]); xticks(-600:200:800)
     ylim([2 40]); yticks(5:5:40)
-%     xlim([-200 800]); xticks(-200:100:800) %match ERPs
+    xlim([-200 800]); xticks(-200:100:800) %match ERPs
     ylabel('Freqency (Hz)'); xlabel('Time (ms)');
     t = colorbar('peer',gca,'Ticks',[0:.01:max(CLim)]);
     set(get(t,'ylabel'),'String', 'p-value');
@@ -228,9 +229,10 @@ imagesc(times,freqs,tmp_plot,CLim)
 set(gca,'Ydir','Normal')
 line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
 line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
-xlim([-700 800]); xticks(-600:200:800)
+% ylim([3 40]); yticks(5:5:40)
+% xlim([-700 800]); xticks(-600:200:800)
 ylim([2 40]); yticks(5:5:40)
-% xlim([-200 800]); xticks(-200:100:800) %match ERPs
+xlim([-200 800]); xticks(-200:100:800) %match ERPs
 ylabel('Freqency (Hz)'); xlabel('Time (ms)');
 t = colorbar('peer',gca,'Ticks',[0:.01:max(CLim)]);
 set(get(t,'ylabel'),'String', 'p-value');
@@ -258,8 +260,8 @@ for ii = 1:length(exp2.singletrialselecs)
     line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
     line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
     ylim([2 40]); yticks(5:5:40)
-%     xlim([-200 800]); xticks(-200:100:800) %match ERPs
-    xlim([-700 800]); xticks(-600:200:800)
+    xlim([-200 800]); xticks(-200:100:800) %match ERPs
+%     xlim([-700 800]); xticks(-600:200:800)
     ylabel('Freqency (Hz)'); xlabel('Time (ms)');
     t = colorbar('peer',gca,'Ticks',[0:.01:max(CLim)]);
     set(get(t,'ylabel'),'String', 'p-value');
@@ -288,8 +290,8 @@ for ii = 1:length(exp2.singletrialselecs)
     line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
     line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5)  %vertical line for response screen onset
     ylim([2 40]); yticks(5:5:40)
-%     xlim([-200 800]); xticks(-200:100:800) %match ERPs
-    xlim([-700 800]); xticks(-600:200:800)
+    xlim([-200 800]); xticks(-200:100:800) %match ERPs
+%     xlim([-700 800]); xticks(-600:200:800)
     ylabel('Freqency (Hz)'); xlabel('Time (ms)');
     t = colorbar('peer',gca,'Ticks',[0:.01:max(CLim)]);
     set(get(t,'ylabel'),'String', 'p-value');
@@ -326,7 +328,9 @@ tWin{6} = [360 500]; %P3
 % freqband = [30 40]; %gamma
 % freqband = [23 29]; %beta2
 % freqband = [15 22]; %beta1
+% freqband = [10 14]; %high alpha
 % freqband = [8 14]; %alpha
+% freqband = [8 11]; %low alpha
 freqband = [4 7]; %theta
 % freqband = [2 3]; %delta
 freqlim = find(freqs>=(freqband(1)-0.5) & freqs<=(freqband(2)+0.5));
@@ -334,17 +338,14 @@ freqlim = find(freqs>=(freqband(1)-0.5) & freqs<=(freqband(2)+0.5));
 
 % Choose phase measure
 cout_pmap = circWWcat{1,1};
+% [h, crit_p, adj_ci_cvrg, cout_pmap] = fdr_bh(cout_pmap,0.05,'pdep','yes'); %multi-comp correction
+% clear h crit_p adj_ci_cvrg
 
 % Get mean power at frequency band for each electrode
 pwr_top = NaN([length(times),length(elect_erp),1]); %pre-allocate
 for ii = 1:length(exp2.singletrialselecs)
     i_elect = exp2.singletrialselecs(ii); %for doing only a selection of electrodes
-    
-    tmp_plot = squeeze(cout_pmap(i_elect,:,:)); %extract data
-    [h, crit_p, adj_ci_cvrg, tmp_plot] = fdr_bh(tmp_plot,0.05,'pdep','yes'); %multi-comp correction
-    
-    pwr_top(:,i_elect,1) = squeeze(mean(tmp_plot(freqlim,:),1));
-    clear tmp_plot h crit_p adj_ci_cvrg
+    pwr_top(:,i_elect,1) = squeeze(mean(cout_pmap(i_elect,freqlim,:),2));
 end
 clear ii i_elect
 

@@ -37,123 +37,6 @@ for i_part = 1:length(exp.participants)
     clear error_deg_tmp targets data
 end
 clear i_part
-% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-%% Compare fits of errors to different working memory models
-% Figure 3 used the information below, but was created in excel
-% Akaike Information Criterion (AIC): + values evidence in favor of model 2, - in favor of model 1
-% Bayesian Information Criterion (BIC): + values evidence in favor of model 2, - in favor of model 1
-% Log likelihood: - values evidence in favor of model 2, + in favor of model 1 
-% Corrected Akaike Information (AICc): + values evidence in favor of model 2, - in favor of model 1
-% Deviance Information Criterion (DIC): + values evidence in favor of model 2, - in favor of model 1
-
-model1 = StandardMixtureModel(); %standard 2 parameter model
-model2 = WithBias(StandardMixtureModel); % model with mu
-% model3 = ContinuousResourceModel();
-model3 = VariablePrecisionModel();
-model4 = VariablePrecisionModel_GammaPrecision();
-model_cmp = cell(1,length(exp.participants)); %pre-allocate
-for ii = 1:length(exp.participants)
-    sprintf(['Subj ' num2str(ii)])
-    
-    data.errors = resp_errdeg{ii}';
-    data.n = ones(length(data.errors),1);
-    
-    model_cmp{ii} = MemFit(data,{model1,model2,model3,model4}); %comparing models
-    
-    %Make differences for easy comparison
-    cmpDiff.AIC(ii,1)  = model_cmp{ii}.AIC(1,1) - model_cmp{ii}.AIC(1,2);
-    cmpDiff.AIC(ii,2)  = model_cmp{ii}.AIC(1,1) - model_cmp{ii}.AIC(1,3);
-    cmpDiff.AIC(ii,3)  = model_cmp{ii}.AIC(1,1) - model_cmp{ii}.AIC(1,4);
-    cmpDiff.AIC(ii,4)  = model_cmp{ii}.AIC(1,2) - model_cmp{ii}.AIC(1,3);
-    cmpDiff.AIC(ii,5)  = model_cmp{ii}.AIC(1,2) - model_cmp{ii}.AIC(1,4);
-    cmpDiff.AIC(ii,6)  = model_cmp{ii}.AIC(1,3) - model_cmp{ii}.AIC(1,4);
-    
-    cmpDiff.BIC(ii,1) = model_cmp{ii}.BIC(1,1) - model_cmp{ii}.BIC(1,2);
-    cmpDiff.BIC(ii,2) = model_cmp{ii}.BIC(1,1) - model_cmp{ii}.BIC(1,3);
-    cmpDiff.BIC(ii,3) = model_cmp{ii}.BIC(1,1) - model_cmp{ii}.BIC(1,4);
-    cmpDiff.BIC(ii,4) = model_cmp{ii}.BIC(1,2) - model_cmp{ii}.BIC(1,3);
-    cmpDiff.BIC(ii,5) = model_cmp{ii}.BIC(1,2) - model_cmp{ii}.BIC(1,4);
-    cmpDiff.BIC(ii,6) = model_cmp{ii}.BIC(1,3) - model_cmp{ii}.BIC(1,4);
-    
-    cmpDiff.logLike(ii,1) = model_cmp{ii}.logLike(1,1) - model_cmp{ii}.logLike(1,2);
-    cmpDiff.logLike(ii,2) = model_cmp{ii}.logLike(1,1) - model_cmp{ii}.logLike(1,3);
-    cmpDiff.logLike(ii,3) = model_cmp{ii}.logLike(1,1) - model_cmp{ii}.logLike(1,4);
-    cmpDiff.logLike(ii,4) = model_cmp{ii}.logLike(1,2) - model_cmp{ii}.logLike(1,3);
-    cmpDiff.logLike(ii,5) = model_cmp{ii}.logLike(1,2) - model_cmp{ii}.logLike(1,4);
-    cmpDiff.logLike(ii,6) = model_cmp{ii}.logLike(1,3) - model_cmp{ii}.logLike(1,4);
-    
-    cmpDiff.AICc(ii,1) = model_cmp{ii}.AICc(1,1) - model_cmp{ii}.AICc(1,2);
-    cmpDiff.AICc(ii,2) = model_cmp{ii}.AICc(1,1) - model_cmp{ii}.AICc(1,3);
-    cmpDiff.AICc(ii,3) = model_cmp{ii}.AICc(1,1) - model_cmp{ii}.AICc(1,4);
-    cmpDiff.AICc(ii,4) = model_cmp{ii}.AICc(1,2) - model_cmp{ii}.AICc(1,3);
-    cmpDiff.AICc(ii,5) = model_cmp{ii}.AICc(1,2) - model_cmp{ii}.AICc(1,4);
-    cmpDiff.AICc(ii,6) = model_cmp{ii}.AICc(1,3) - model_cmp{ii}.AICc(1,4);
-    
-    cmpDiff.DIC(ii,1) = model_cmp{ii}.DIC(1,1) - model_cmp{ii}.DIC(1,2);
-    cmpDiff.DIC(ii,2) = model_cmp{ii}.DIC(1,1) - model_cmp{ii}.DIC(1,3);
-    cmpDiff.DIC(ii,3) = model_cmp{ii}.DIC(1,1) - model_cmp{ii}.DIC(1,4);
-    cmpDiff.DIC(ii,4) = model_cmp{ii}.DIC(1,2) - model_cmp{ii}.DIC(1,3);
-    cmpDiff.DIC(ii,5) = model_cmp{ii}.DIC(1,2) - model_cmp{ii}.DIC(1,4);
-    cmpDiff.DIC(ii,6) = model_cmp{ii}.DIC(1,3) - model_cmp{ii}.DIC(1,4);
-    
-
-    %Also put together table of goodness-of-fit values
-    gof.AIC(ii,1) = model_cmp{ii}.AIC(1,1);
-    gof.AIC(ii,2) = model_cmp{ii}.AIC(1,2);
-    gof.AIC(ii,3) = model_cmp{ii}.AIC(1,3);
-    gof.AIC(ii,4) = model_cmp{ii}.AIC(1,4);
-    
-    gof.BIC(ii,1) = model_cmp{ii}.BIC(1,1);
-    gof.BIC(ii,2) = model_cmp{ii}.BIC(1,2);
-    gof.BIC(ii,3) = model_cmp{ii}.BIC(1,3);
-    gof.BIC(ii,4) = model_cmp{ii}.BIC(1,4);
-    
-    gof.logLike(ii,1) = model_cmp{ii}.logLike(1,1);
-    gof.logLike(ii,2) = model_cmp{ii}.logLike(1,2);
-    gof.logLike(ii,3) = model_cmp{ii}.logLike(1,3);
-    gof.logLike(ii,4) = model_cmp{ii}.logLike(1,4);
-    
-    gof.AICc(ii,1) = model_cmp{ii}.AICc(1,1);
-    gof.AICc(ii,2) = model_cmp{ii}.AICc(1,2);
-    gof.AICc(ii,3) = model_cmp{ii}.AICc(1,3);
-    gof.AICc(ii,4) = model_cmp{ii}.AICc(1,4);
-    
-    gof.DIC(ii,1) = model_cmp{ii}.DIC(1,1);
-    gof.DIC(ii,2) = model_cmp{ii}.DIC(1,2);
-    gof.DIC(ii,3) = model_cmp{ii}.DIC(1,3);
-    gof.DIC(ii,4) = model_cmp{ii}.DIC(1,4);
-
-    clear data
-end
-
-clear ii error_deg model1 model2 model3 model4
-
-T = struct2table(cmpDiff);
-Tout = struct2table(gof);
-
-
-% Save output to text file
-writematrix(T,'model4_cmpDiff.txt','Delimiter','tab')
-writematrix(Tout,'model4_gof.txt','Delimiter','tab')
-
-
-% Plot fit differences
-figure; boxplot(T.BIC(:,1:3),'Labels',{'Standard + Bias','Variable Percision',...
-    'Variable + GammaPrecision'},'Whisker',2)
-ylim([-20 5])
-ylabel('\Delta BIC from Standard Mixture Model','Interpreter','tex');
-
-figure; boxplot(T.logLike(:,1:3),'Labels',{'Standard + Bias','Variable Percision',...
-    'Variable + GammaPrecision'},'Whisker',2)
-ylabel('\Delta logLikelihood from Standard Mixture Model','Interpreter','tex');
-
-
-
-clear cmpDiff gof T Tout
 
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -162,7 +45,7 @@ clear cmpDiff gof T Tout
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 % :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-%% Compare fits of standard mix model & standard mix model + bias
+%% Compare fits of errors to two different model
 % Akaike Information Criterion (AIC): + values evidence in favor of model 2, - in favor of model 1
 % **Bayesian Information Criterion (BIC): + values evidence in favor of model 2, - in favor of model 1
 % Log likelihood: - values evidence in favor of model 2, + in favor of model 1 
@@ -250,7 +133,6 @@ model = StandardMixtureModel(); %standard 2 parameter model
 % model = WithBias(StandardMixtureModel); %model with mu
 model_out_cat = MemFit(resp_errdeg_cat,model); %fits with plotting
 clear model
-
 
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
