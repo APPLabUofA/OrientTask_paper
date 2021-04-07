@@ -40,6 +40,11 @@ cd(saveLocation_perm)
 
 zmaplist = cellstr(ls('*.mat')); %get list of saved data in folder
 
+% get time window used in analysis
+load(zmaplist{1})
+timephi = find(times>=timewin(1) & times<=timewin(2));
+clear threshold_out zmap_out
+
 % load data and put into variables
 combo_threshold = cell(1,length(zmaplist)); %pre-allocate
 combo_zmap = cell(1,length(zmaplist)); %pre-allocate
@@ -94,14 +99,14 @@ for ii = 1:length(exp.singletrialselecs)
     
     % Plot the uncorrected z-values
     figure; colormap(cmap)
-    contourf(times,freqs,squeeze(cout_zmap(i_elect,:,:)),40,'linecolor','none')
+    contourf(times(timephi),freqs,squeeze(cout_zmap(i_elect,:,:)),40,'linecolor','none')
     
     % Apply corrected threshold contour map
     zmapthresh = squeeze(cout_zmap(i_elect,:,:));
     zmapthresh(zmapthresh>lower_threshold & zmapthresh<upper_threshold)=false;
     zmapthresh=logical(zmapthresh);
     hold on
-    contour(times,freqs,zmapthresh,1,'linecolor','k') %plots black lines
+    contour(times(timephi),freqs,zmapthresh,1,'linecolor','k') %plots black lines
 
     axis square
     set(gca,'clim',CLim)
@@ -110,8 +115,8 @@ for ii = 1:length(exp.singletrialselecs)
     line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',1.5) %vertical line
     line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',1.5) %vertical line for response screen onset
     ylim([2 40]); yticks(5:5:40)
-%     xlim([-700 800]); xticks(-600:200:800)
-    xlim([-200 800]); xticks(-200:100:800) %to match ERPs
+    xlim([-700 800]); xticks(-600:200:800)
+%     xlim([-200 800]); xticks(-200:100:800) %to match ERPs
     ylabel('Frequency (Hz)');
     xlabel('Time (ms)');
     t = colorbar('peer',gca);
@@ -140,12 +145,12 @@ lower_threshold = mean(cout_thresh(:,1),1);
 upper_threshold = mean(cout_thresh(:,2),1);
 
 figure; colormap(cmap)
-contourf(times,freqs,squeeze(mean(cout_zmap(:,:,:),1)),40,'linecolor','none')
+contourf(times(timephi),freqs,squeeze(mean(cout_zmap(:,:,:),1)),40,'linecolor','none')
 zmapthresh = squeeze(mean(cout_zmap(:,:,:),1));
 zmapthresh(zmapthresh>lower_threshold & zmapthresh<upper_threshold)=false;
 zmapthresh=logical(zmapthresh);
 hold on
-contour(times,freqs,zmapthresh,1,'linecolor','k')
+contour(times(timephi),freqs,zmapthresh,1,'linecolor','k')
 
 axis square
 set(gca,'clim',CLim)
@@ -183,7 +188,6 @@ clear combo_threshold combo_zmap cout_thresh cout_zmap
 % '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 %% '''''''''''''''''''''''    Topographys     ''''''''''''''''''''''''''''''
 % '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-% These plots were not included in the paper, but can be useful to look at
 
 % List electrodes to get ERP topograph plots (need all of them) 
 elect_erp = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32];
@@ -212,7 +216,7 @@ freqband = [30 40]; %gamma
 freqlim = find(freqs>=(freqband(1)-0.5) & freqs<=(freqband(2)+0.5));
 
 % Get mean power at frequency band for each electrode
-pwr_top = NaN([length(times),length(elect_erp),1]); %pre-allocate
+pwr_top = NaN([length(timephi),length(elect_erp),1]); %pre-allocate
 for ii = 1:length(exp.singletrialselecs)
     i_elect = exp.singletrialselecs(ii); %for doing only a selection of electrodes
     pwr_top(:,i_elect,1) = squeeze(mean(cout_zmap(i_elect,freqlim,:),2));
@@ -227,7 +231,7 @@ for tw_i = 1:length(tWin) %loop through several time windows
  
     itWin = tWin{tw_i}; %select each time range if looping
     %finds the times you want from the times variable
-    time_window = find(times>= itWin(1),1):find(times>= itWin(2),1)-1;
+    time_window = find(times(timephi)>= itWin(1),1):find(times(timephi)>= itWin(2),1)-1;
 
     temp = mean(pwr_top(time_window,:,1),1)'; %get power at time window
     temp(1) = NaN; %not M2 electrode
@@ -257,7 +261,8 @@ close all
 % -------------------------------------------------------------------------
 % -------------------------------------------------------------------------
 
-clear combo_threshold combo_zmap cout_thresh cout_zmap elect_erp el_erp_names
+clear combo_threshold combo_zmap cout_thresh cout_zmap elect_erp el_erp_names...
+    timephi timewin
 
 % -------------------------------------------------------------------------
 % -------------------------------------------------------------------------

@@ -52,8 +52,12 @@ mcc_voxel_pval = 0.05; % mcc = multiple comparisons correction
 
 n_permutes = 1e5; %number of permutations used to estimate null distribution
 
+%finds the times you want from the times variable
+timewin = [-700 800];
+timephi = find(times>=timewin(1) & times<=timewin(2));
+
 num_frex = length(freqs); %number of frequencies
-nTimepoints = length(times); %number of timepoints
+nTimepoints = length(timephi); %number of timepoints
 
 
 % -------------------------------------------------------------------------
@@ -80,7 +84,7 @@ for i_part = 1:length(exp.participants)
         
         % Get subject's power
               %all_ersp(participant x electrode).trials(freq x time x trial)
-        obs_pwr(:,:,:) = squeeze(ERSP{i_part,i_elect}.trials); %get single subject's power
+        obs_pwr(:,:,:) = squeeze(ERSP{i_part,i_elect}.trials(:,timephi,:)); %get single subject's power
         % rank-transform power data (must be transformed)
         obs_pwr_reshape = reshape(obs_pwr,num_frex*nTimepoints,n_resp)';
         obs_pwr_rank = tiedrank(obs_pwr_reshape);
@@ -174,7 +178,7 @@ clear errdeg errdeg_rank num_frex i_part nTimepoints voxel_pval...
 % some variables that are saved were not used in the paper
 save([saveLocation 'corrR_bysubj_1e5perm.mat'],'freqs','p_tcorr','p_zcorr',...
     'p_zcorr_thresh','realcorrs','realcorrs_out','realcorrs_plot_out',...
-    'threshold_out','times','tvalsRho','zmap_out'); 
+    'threshold_out','times','tvalsRho','zmap_out','timewin'); 
 
 % -------------------------------------------------------------------------
 
@@ -190,11 +194,11 @@ clear -regexp \<n_
 %% Plot of averages of z-scores
 
 %extract data
-thresh_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(times)]);%pre-allocate
+thresh_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(timephi)]);%pre-allocate
 realcorrs_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(times)]);%pre-allocate
-realcorrs_plot_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(times)]);%pre-allocate
-tvalsRho_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(times)]);%pre-allocate
-zmap_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(times)]);%pre-allocate
+realcorrs_plot_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(timephi)]);%pre-allocate
+tvalsRho_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(timephi)]);%pre-allocate
+zmap_tmp = NaN([length(exp.participants),length(exp.singletrialselecs),length(freqs),length(timephi)]);%pre-allocate
 for ii = 1:length(exp.singletrialselecs)
     for i_part = 1:length(exp.participants) 
         thresh_tmp(i_part,ii,:,:) = threshold_out{i_part,ii};
@@ -229,7 +233,7 @@ for ii = 1:length(exp.singletrialselecs)
     corr_plot = squeeze(cout_zmap(ii,:,:));
     
     figure; colormap(cmap); %open a new figure
-    imagesc(times,freqs,corr_plot,CLim)
+    imagesc(times(timephi),freqs,corr_plot,CLim)
     hold on
     
     % apply pixel-level corrected threshold
@@ -299,18 +303,18 @@ for i_part = 1:length(exp.participants)
         tmp_plot = plot_cont{i_part,ii}; %get data
         
         subtightplot(4,8,ii)
-        imagesc(times,freqs,plot_data{i_part,ii},CLim) %plot z-map
+        imagesc(times(timephi),freqs,plot_data{i_part,ii},CLim) %plot z-map
         hold on
         
 %         [h, crit_p, adj_ci_cvrg, tmp_plot] = fdr_bh(tmp_plot,0.05,'pdep','yes'); %multi-comp correction
         tmp_plot(tmp_plot>0.05)=false;
         tmp_plot=logical(tmp_plot);
-        contour(times,freqs,tmp_plot,1,'linecolor','k','LineWidth',1)
+        contour(times(timephi),freqs,tmp_plot,1,'linecolor','k','LineWidth',1)
         
         set(gca,'Ydir','Normal')
         line([0 0],[min(freqs) max(freqs)],'Color','k','LineStyle','--','LineWidth',0.75) %vertical line
         line([567 567],[min(freqs) max(freqs)],'color','m','LineStyle','--','LineWidth',0.75)  %vertical line for response screen onset
-        ylim([3 40]); yticks(5:5:40)
+        ylim([2 40]); yticks(5:5:40)
         xlim([-700 800]); xticks(-600:200:800)
         ylabel('Freqency (Hz)'); xlabel('Time (ms)');
 %         colorbar

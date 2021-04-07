@@ -31,7 +31,13 @@ load([exp.dataLocation '\ProcessData\ALLEEG_' exp.settings '.mat'])
 % :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 %% Permutation Testing
-%set parameters inside for loop
+
+%finds the times you want from the times variable
+timewin = [-700 800];
+timephi = find(times>=timewin(1) & times<=timewin(2));
+
+
+%set test parameters inside for loop
 for reps = 1:10 %for repeating analysis & saving results to make an avg map
 
     voxel_pval = 0.05;
@@ -41,8 +47,7 @@ for reps = 1:10 %for repeating analysis & saving results to make an avg map
     n = 24; %number of subjects
     num_frex = length(freqs); %number of frequencies
 
-    time_plot = times; %time variable for plotting
-    nTimepoints = length(times); %number of timepoints
+    nTimepoints = length(timephi); %number of timepoints
     
     % if folder doesn't exist yet, create one
     if ~exist([saveLocation_perm saveFile_perm])
@@ -56,7 +61,7 @@ for reps = 1:10 %for repeating analysis & saving results to make an avg map
 
         % Put power data into one variable
         % (participants x electrodes x frequencies x timepoints)
-        tmp_eegpwr = squeeze(cat(1,x_pwr{i_elect},n_pwr{i_elect}));
+        tmp_eegpwr = squeeze(cat(1,x_pwr{i_elect}(:,:,timephi),n_pwr{i_elect}(:,:,timephi)));
 
         % Logical to select data for t-test computation
         real_condition_mapping = [-ones(1,n) ones(1,n)];
@@ -126,14 +131,15 @@ for reps = 1:10 %for repeating analysis & saving results to make an avg map
     
     % Save each data file
     save_file = [saveLocation_perm saveFile_perm 'zmap_pwr_' num2str(reps) '.mat'];
-    save(save_file,'threshold_out','zmap_out')
+    save(save_file,'threshold_out','zmap_out','timewin')
 
 
     clear threshold_out zmap_out save_file
 
 end
 
-clear reps saveLocation_perm saveFile_perm
+clear reps saveLocation_perm saveFile_perm timephi timewin
+
 
 
 

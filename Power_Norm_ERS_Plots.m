@@ -36,32 +36,26 @@ load([exp.dataLocation '\ProcessData\ALLEEG_' exp.settings '.mat'])
 
 % #########################################################################
 % /////////////////////////////////////////////////////////////////////////
-%%                     Baseline Correction
+%% Raw ERS values (log scaled)
 % /////////////////////////////////////////////////////////////////////////
 % #########################################################################
-% Right now it is set-up to subtract mean power across the epoch at each
-% frequency from each time point at that same frequency
-% note: does not include the catch trial data
-tic %see how long this takes
+
+% --For data with targets--
 all_erspN = cell(length(exp.participants),length(exp.singletrialselecs)); %pre-allocate
 for i_part = 1:length(exp.participants) % --
     for ii = 1:length(exp.singletrialselecs)
         i_elect = exp.singletrialselecs(ii); %for doing only a selection of electrodes
         % all_ersp is (participant x electrode).trials(freq x time x trial)
-        tmp_ersp = abs(all_ersp{i_part,i_elect});
+        tmp_ersp = abs(all_ersp{i_part,i_elect}).^2;
         for i_trial = 1:size(tmp_ersp,3)
-            for fq = 1:length(freqs)
-                bl_freq = mean(tmp_ersp(fq,:,i_trial),2); %average each trial
-%                 bl_freq = mean(mean(tmp_ersp(fq,:,:),2),3); %average all trials
-                all_erspN{i_part,i_elect}.trials(fq,:,i_trial) = tmp_ersp(fq,:,i_trial)-bl_freq;
-            end
-        clear fq bl_freq
+            all_erspN{i_part,i_elect}.trials(:,:,i_trial) = log10(tmp_ersp(:,:,i_trial)); %dB converted
         end
+        clear i_trial
     end
     clear ii i_elect tmp_ersp
 end
 clear i_part
-toc %see how long this takes
+
 
 
 % #########################################################################
@@ -69,6 +63,10 @@ toc %see how long this takes
 %%                      Standardize Power
 % /////////////////////////////////////////////////////////////////////////
 % #########################################################################
+
+%finds the times you want from the timess variable
+timewin = [-700 567];
+timephi = find(times>=timewin(1) & times<=timewin(2));
 
 all_ersp_Z = cell(length(exp.participants),length(exp.singletrialselecs)); %pre-allocate
 % Change power to z-score values per person
@@ -79,19 +77,25 @@ for i_part = 1:length(exp.participants)
         % all_ersp is (participant x electrode).trials(freq x time x trial)
         part_ersp = all_erspN{i_part,i_elect}.trials; %get single subject's baseline corrected power
 %         all_ersp_Z{i_part,i_elect}.trials = normalize(part_ersp,3,'zscore','robust');
-        all_ersp_Z{i_part,i_elect}.trials = (part_ersp - mean(part_ersp(:))) / std(part_ersp(:));
-        clear part_ersp i_elect
+        
+        baseline_power = part_ersp(:,timephi,:);
+        baselineZ = (part_ersp-repmat(mean(baseline_power,2),1,size(part_ersp,2))) ./ repmat(std(baseline_power,[],2),1,size(part_ersp,2));
+        all_ersp_Z{i_part,i_elect}.trials = baselineZ;
+%         all_ersp_Z{i_part,i_elect}.trials =...
+%             (part_ersp - mean(part_ersp(:,timephi,:),2)) ./ std(part_ersp(:,timephi,:),[],2);
+        clear part_ersp i_elect baselineZ baseline_power
     end
     clear ii
 end
-clear i_part
+clear i_part timephi
 
 
 % /////////////////////////////////////////////////////////////////////////
 %% Save Standardized Data
 chanlocs = EEG.chanlocs; %going to want to save electrode locations
 % this is large file so it will take some time to save
-save([saveLocation 'all_ersp_Z_v4.mat'],'all_ersp_z','chanlocs','-v7.3')
+save([saveLocation 'all_ersp_Z_v4.mat'],'all_ersp_z','chanlocs','timewin',...
+    '-v7.3')
 
 
 % /////////////////////////////////////////////////////////////////////////
@@ -100,6 +104,8 @@ all_ersp_Z = struct2cell(load([saveLocation 'all_ersp_Z_v4.mat'],'all_ersp_z'));
 all_ersp_Z = all_ersp_Z{1};
 chanlocs = struct2cell(load([saveLocation 'all_ersp_Z_v4.mat'],'chanlocs')); 
 chanlocs = chanlocs{1};
+timewin = struct2cell(load([saveLocation 'all_ersp_Z_v4.mat'],'timewin')); 
+timewin = timewin{1};
 
 % /////////////////////////////////////////////////////////////////////////
 
@@ -162,7 +168,8 @@ clear ii i_part
 
 % /////////////////////////////////////////////////////////////////////////
 % Save data if not saved yet
-save([saveLocation 'pwr_AvG_v4.mat'],'errlims','n_errdeg_m','n_pwr','x_errdeg_m','x_pwr');
+save([saveLocation 'pwr_AvG_v4.mat'],'errlims','n_errdeg_m','n_pwr',...
+    'x_errdeg_m','x_pwr','timewin');
 
 % /////////////////////////////////////////////////////////////////////////
 
@@ -194,7 +201,7 @@ for ii = 1:length(exp.singletrialselecs)
     plot_ers_x = squeeze(mean(x_pwr{1,i_elect}(:,:,:),1)); %small errors
     plot_ers_n = squeeze(mean(n_pwr{1,i_elect}(:,:,:),1)); %large errors
     
-    CLim = [-1.5 1.5]; %set power scale of plot
+    CLim = [-0.4 0.4]; %set power scale of plot
     
     % Plot Small Errors
     figure('Position', [1 1 1685 405]); colormap(cmap) %open a new figure
@@ -284,9 +291,12 @@ plot_x_avg = squeeze(nanmean(plot_ers_x,1)); %small errors
 plot_n_avg = squeeze(nanmean(plot_ers_n,1)); %large errors
 clear plot_ers_x plot_ers_n
 
-% Open new figure
+CLim = [-0.4 0.4]; %set power scale of plot
 cmap = jet; %create colormap colors
+
+% Open new figure
 figure('Position', [1 1 1685 405]); colormap(cmap)
+
 % Plot Small Errors
 subplot(1,2,1)
 imagesc(times,freqs,plot_x_avg,CLim);
