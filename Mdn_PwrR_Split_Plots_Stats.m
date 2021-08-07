@@ -16,10 +16,8 @@ currentfolder = pwd; %to return to current folder after loaded data
 
 % /////////////////////////////////////////////////////////////////////////
 %% Load Processed EEG Data
-all_erspR = struct2cell(load([saveLocation 'all_ersp_R_v4.mat'],'all_erspR'));  %gets loaded as a struct
-all_erspR = all_erspR{1};
-chanlocs = struct2cell(load([saveLocation 'all_ersp_R_v4.mat'],'chanlocs')); 
-chanlocs = chanlocs{1};
+% Load data saved by Mdn_PwrR_Split.m
+load([saveLocation 'mdn_pwrR_split_v4.mat'])
 
 % /////////////////////////////////////////////////////////////////////////
 %% Load behavioral data and time & freq parameters
@@ -38,15 +36,14 @@ if ~exist(saveFigLoc)
 end
 
 
-
-
-
 % -------------------------------------------------------------------------
 % /////////////////////////////////////////////////////////////////////////
 %%    Compute mean g & sd in frequency windows then plot
 % /////////////////////////////////////////////////////////////////////////
 % -------------------------------------------------------------------------
-
+% Going to need to uncomment one frequency band at a time and then run
+% the code below it (I know it is a bit annoying, but it was to make sure
+% visual checks happened throughout the analysis)
 
 clear g_Hpwr_win g_Lpwr_win sd_Hpwr_win sd_Lpwr_win freqlim freqband...
     g_out_bypwr sd_out_bypwr perm_sd_pwr_win perm_g_pwr_win
@@ -216,8 +213,6 @@ clear g_Hpwr_win g_Lpwr_win perm_g_pwr_win g_out_bypwr freqlim freqband
 
 %finds the frequencies you want (gamma (30–90 Hz))
 freqband = [30 40]; %gamma
-% freqband = [23 30]; %beta2
-% freqband = [15 22]; %beta1
 % freqband = [15 29]; %beta
 % freqband = [8 14]; %alpha
 % freqband = [4 7]; %theta
@@ -288,8 +283,6 @@ clear sd_Hpwr_win sd_Lpwr_win freqlim freqband sd_out_bypwr perm_sd_pwr_win
 
 %finds the frequencies you want (gamma (30–90 Hz))
 freqband = [30 40]; %gamma
-% freqband = [23 30]; %beta2
-% freqband = [15 22]; %beta1
 % freqband = [15 29]; %beta
 % freqband = [8 14]; %alpha
 % freqband = [4 7]; %theta

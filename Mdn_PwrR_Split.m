@@ -3,7 +3,7 @@
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 % 
 % The code below can be run on other processes data (like the normalized
-% EEG data). Only the raw log power data was used in the manuscript.
+% EEG data). Just be sure to specify the variable name :-)
 % 
 % |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 % :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -92,7 +92,7 @@ clear i_part
 % this is large file so it will take some time to save
 save([saveLocation 'mdn_pwrR_split_v4.mat'],...
     'errdeg_Hpwr_trl','errdeg_Lpwr_trl','g_out_Hpwr','g_out_Lpwr',...
-    'sd_out_Hpwr','sd_out_Lpwr','model_out','times','-v7.3')
+    'sd_out_Hpwr','sd_out_Lpwr','model_out','times','chanlocs','-v7.3')
 
 % /////////////////////////////////////////////////////////////////////////
 

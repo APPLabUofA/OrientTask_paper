@@ -67,6 +67,31 @@ chan_locs = EEG.chanlocs; %save channel locations
 save([saveLocation 'erp_out_byTarget.mat'],'errs_x','errs_n','erp_out_x','erp_out_n',...
     'model_out','resp_errdeg','erp_time','chan_locs')
 
+
+
+% /////////////////////////////////////////////////////////////////////////
+% '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+%%                  Save Unparsed Data
+% '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+% /////////////////////////////////////////////////////////////////////////
+
+erp_out_all = cell(1,length(exp.participants));    %pre-allocate
+for i_part = 1:length(exp.participants)
+    
+    % Extract segments
+    erp_out_all{i_part}(:,:,:) = squeeze(ALLEEG(i_part).data(:,:,:));
+        
+end
+clear i_part
+
+% /////////////////////////////////////////////////////////////////////////
+% Set-up and save relevant information
+erp_time = EEG.times; %save time variable
+chan_locs = EEG.chanlocs; %save channel locations
+save([saveLocation 'erp_out_all_v4.mat'],'erp_out_all','erp_time','chan_locs',...
+    '-v7.3') %save with version for large files
+
+
 % /////////////////////////////////////////////////////////////////////////
 % Clear workspace
 ccc
